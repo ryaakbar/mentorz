@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MentorZ — AI Mentor Gen Z</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="noise"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- ══════════════════════════════════
+     APP SHELL — fixed height container
+     ══════════════════════════════════ -->
+<div class="app-shell">
+
+  <!-- MARQUEE -->
+  <div class="marquee-bar">
+    <div class="marquee-track">
+      <span>MENTORZ AI ◆ GEN Z MENTOR ◆ POWERED BY DEEPAI ◆ CHAT · IMAGE · CODER ◆ FR FR NO CAP ◆ LET'S GO BRO 🚀 ◆ MENTORZ AI ◆ GEN Z MENTOR ◆ POWERED BY DEEPAI ◆ CHAT · IMAGE · CODER ◆ FR FR NO CAP ◆ LET'S GO BRO 🚀 ◆</span>
+    </div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <span class="nav-title">Mentor<span class="nav-accent">Z</span></span>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-chat" onclick="switchMode('chat')">
+        <i class="fa-solid fa-message"></i><span>Chat</span>
+      </button>
+      <button class="nav-tab" id="tab-image" onclick="switchMode('image')">
+        <i class="fa-solid fa-image"></i><span>Image</span>
+      </button>
+      <button class="nav-tab" id="tab-coder" onclick="switchMode('coder')">
+        <i class="fa-solid fa-code"></i><span>Coder</span>
+      </button>
+    </div>
+
+    <div class="nav-right">
+      <button class="btn-clear" onclick="clearChat()" title="Clear chat">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+      <div class="nav-status">
+        <span class="status-dot"></span>
+        <span>LIVE</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══ VIEWS CONTAINER ══ -->
+  <div class="views-wrap">
+
+    <!-- ══ CHAT VIEW ══ -->
+    <div class="view active" id="view-chat">
+      <div class="view-scroll">
+
+        <div class="chat-hero reveal" id="chatHero">
+          <div class="hero-badge">✨ AI Mentor Gen Z — Free & No Cap</div>
+          <h1 class="hero-title">Hey bro,<br><span class="hero-grad">let's level up! 🚀</span></h1>
+          <p class="hero-sub">Gue MentorZ — your AI mentor yang siap bantu lo level up di semua bidang. No cap, fr fr! 💯</p>
+          <div class="hero-chips">
+            <button class="hero-chip" onclick="sendQuick('Hei MentorZ! Perkenalkan diri dong 👀')">👋 Kenalan dulu</button>
+            <button class="hero-chip" onclick="sendQuick('Tips produktivitas buat Gen Z yang sering overthinking 🧠')">🧠 Produktivitas</button>
+            <button class="hero-chip" onclick="sendQuick('Cara belajar coding dari nol buat pemula 💻')">💻 Belajar Coding</button>
+            <button class="hero-chip" onclick="sendQuick('Cara manage keuangan yang oke buat fresh grad 💰')">💰 Finansial</button>
+            <button class="hero-chip" onclick="sendQuick('Mental health tips buat Gen Z yang gampang burnout 🫶')">🫶 Mental Health</button>
+            <button class="hero-chip" onclick="sendQuick('Content creator tips viral 2026 🚀')">🚀 Content Creator</button>
+          </div>
+          <div class="hero-features">
+            <div class="hf-item"><i class="fa-solid fa-bolt"></i> Real-time AI</div>
+            <div class="hf-item"><i class="fa-solid fa-brain"></i> Multi-topic</div>
+            <div class="hf-item"><i class="fa-solid fa-shield-halved"></i> No Filter BS</div>
+            <div class="hf-item"><i class="fa-solid fa-fire"></i> Gen Z Vibes</div>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="typing-wrap hidden" id="typingWrap">
+          <div class="typing-avatar">Z</div>
+          <div class="typing-bubble"><span></span><span></span><span></span></div>
+          <span class="typing-text">MentorZ lagi mikir... 🤔</span>
+        </div>
+
+      </div>
+
+      <!-- INPUT — sticky at bottom of view -->
+      <div class="input-dock">
+        <!-- Attachment Preview -->
+        <div class="attach-preview hidden" id="chatAttachPreview">
+          <div class="attach-inner" id="chatAttachInner"></div>
+          <button class="attach-remove" onclick="removeAttachment('chat')">
+            <i class="fa-solid fa-xmark"></i> Hapus
+          </button>
+        </div>
+        <!-- Input Box -->
+        <div class="input-box" id="chatInputBox">
+          <!-- Hidden file inputs - TERPISAH: satu untuk foto, satu untuk file -->
+          <input type="file" id="chatPhotoInput" class="hidden"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp"
+            onchange="handleFileSelect(event,'chat')">
+          <input type="file" id="chatFileInput" class="hidden"
+            accept=".txt,.js,.py,.ts,.jsx,.tsx,.html,.css,.json,.md,.csv,.java,.cpp,.c,.cs,.php,.go,.rs,.swift,.xml,.yaml,.yml,.sql,.sh"
+            onchange="handleFileSelect(event,'chat')">
+          <!-- Attach dropdown trigger -->
+          <div class="attach-wrap">
+            <button class="attach-btn" id="chatAttachBtn" onclick="toggleMenu('chatMenu')" title="Lampirkan foto/file">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+            <div class="attach-menu hidden" id="chatMenu">
+              <button onclick="openPhotoPicker('chat')"><i class="fa-solid fa-image"></i> Foto / Gambar</button>
+              <button onclick="openFilePicker('chat')"><i class="fa-solid fa-file-code"></i> File / Code</button>
+            </div>
+          </div>
+          <!-- Text input -->
+          <textarea id="chatInput" class="chat-textarea"
+            placeholder="Tanya apapun ke MentorZ... ⚡"
+            rows="1"
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+        <div class="input-footer">
+          <span>MentorZ bisa salah. Double check info penting ya bro 🤙</span>
+          <span id="charCount">0 / 2000</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ IMAGE VIEW ══ -->
+    <div class="view" id="view-image">
+      <div class="view-scroll">
+        <div class="page-header reveal">
+          <div class="page-badge">🎨 AI Image Generator</div>
+          <h1 class="page-title">Generate Gambar<br><span class="page-grad">dari Teks ✨</span></h1>
+          <p class="page-sub">Deskripsiin gambar lo dalam kata-kata, MentorZ yang bikin. W banget! 🔥</p>
+        </div>
+
+        <div class="image-workspace">
+          <div class="image-controls glass-card reveal d1">
+            <div class="ctrl-section">
+              <label class="ctrl-label">Describe your image 📝</label>
+              <textarea id="imagePrompt" class="ctrl-textarea"
+                placeholder="Contoh: A futuristic city at night with neon lights, cyberpunk style, ultra detailed 4K..."
+                rows="4"></textarea>
+            </div>
+            <div class="ctrl-section">
+              <label class="ctrl-label">Style 🎨</label>
+              <div class="style-grid">
+                <button class="style-btn active" onclick="selectStyle(this,'')">Default</button>
+                <button class="style-btn" onclick="selectStyle(this,'realistic photo')">Realistic</button>
+                <button class="style-btn" onclick="selectStyle(this,'anime')">Anime</button>
+                <button class="style-btn" onclick="selectStyle(this,'cyberpunk')">Cyberpunk</button>
+                <button class="style-btn" onclick="selectStyle(this,'oil painting')">Oil Paint</button>
+                <button class="style-btn" onclick="selectStyle(this,'watercolor')">Watercolor</button>
+                <button class="style-btn" onclick="selectStyle(this,'3D render')">3D Render</button>
+                <button class="style-btn" onclick="selectStyle(this,'sketch pencil drawing')">Sketch</button>
+                <button class="style-btn" onclick="selectStyle(this,'pixel art')">Pixel Art</button>
+                <button class="style-btn" onclick="selectStyle(this,'fantasy illustration')">Fantasy</button>
+              </div>
+            </div>
+            <div class="ctrl-section">
+              <label class="ctrl-label">Quick Prompts 💡</label>
+              <div class="quick-prompts">
+                <button class="qp-btn" onclick="setPrompt('A stunning anime girl with glowing blue eyes in a neon city at night')">🌙 Anime City</button>
+                <button class="qp-btn" onclick="setPrompt('Majestic dragon flying over a mountain with aurora borealis, epic fantasy art')">🐉 Dragon Epic</button>
+                <button class="qp-btn" onclick="setPrompt('Futuristic robot with neon lights, cyberpunk aesthetic, ultra detailed')">🤖 Cyber Robot</button>
+                <button class="qp-btn" onclick="setPrompt('Beautiful Indonesian landscape with rice terraces at golden hour')">🌾 Indonesia</button>
+                <button class="qp-btn" onclick="setPrompt('Abstract digital art with vibrant colors and geometric patterns')">🎨 Abstract</button>
+                <button class="qp-btn" onclick="setPrompt('Cozy cafe interior with warm lighting, books, and coffee aesthetic')">☕ Cozy Cafe</button>
+              </div>
+            </div>
+            <button class="btn-generate" onclick="generateImage()" id="generateBtn">
+              <i class="fa-solid fa-wand-magic-sparkles"></i><span>Generate Image</span>
+            </button>
+          </div>
+          <div class="image-result glass-card reveal d2">
+            <div class="result-placeholder" id="imgPlaceholder">
+              <div class="placeholder-icon">🎨</div>
+              <p>Your image will appear here</p>
+              <span>Describe something iconic bro!</span>
+            </div>
+            <div class="result-loading hidden" id="imgLoading">
+              <div class="gen-spinner"></div>
+              <p>MentorZ lagi nge-generate...</p>
+              <span>Usually 10-30 seconds ⏳</span>
+            </div>
+            <div class="result-image-wrap hidden" id="imgResult">
+              <img id="generatedImg" src="" alt="Generated image" onclick="openFullscreen(this)">
+              <div class="img-actions">
+                <button class="img-btn" onclick="downloadImage()"><i class="fa-solid fa-download"></i> Download</button>
+                <button class="img-btn" onclick="regenerateImage()"><i class="fa-solid fa-rotate"></i> Regenerate</button>
+                <button class="img-btn" onclick="shareToChat()"><i class="fa-solid fa-share"></i> Chat</button>
+              </div>
+              <div class="img-prompt-used" id="imgPromptUsed"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="img-history-wrap" id="imgHistoryWrap" style="display:none">
+          <div class="ih-header">
+            <span>History 🗂️</span>
+            <button onclick="clearImgHistory()"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <div class="img-history-grid" id="imgHistoryGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CODER VIEW ══ -->
+    <div class="view" id="view-coder">
+      <div class="view-scroll">
+        <div class="page-header reveal">
+          <div class="page-badge">💻 AI Coding Assistant</div>
+          <h1 class="page-title">MentorZ<br><span class="page-grad">Dev Mode ⚡</span></h1>
+          <p class="page-sub">Tanya apapun soal coding bro. Debug, review, jelasin konsep — gue siap. Fr fr! 🔥</p>
+        </div>
+        <div class="coder-chips reveal d1">
+          <button class="coder-chip" onclick="setCoderPrompt('Debug kode ini bro, ada error yang gue ga ngerti')">🐛 Debug</button>
+          <button class="coder-chip" onclick="setCoderPrompt('Jelasin konsep async/await di JavaScript dong bro')">⚡ Async/Await</button>
+          <button class="coder-chip" onclick="setCoderPrompt('Bikin REST API sederhana dengan Node.js Express')">🔧 REST API</button>
+          <button class="coder-chip" onclick="setCoderPrompt('CSS flexbox vs grid, kapan pake yang mana bro?')">🎨 CSS Layout</button>
+          <button class="coder-chip" onclick="setCoderPrompt('Cara deploy ke Vercel dari GitHub gimana bro?')">🚀 Deploy</button>
+          <button class="coder-chip" onclick="setCoderPrompt('Perbedaan SQL vs NoSQL bro?')">🗄️ Database</button>
+          <button class="coder-chip" onclick="setCoderPrompt('Roadmap belajar coding terbaik 2026?')">📚 Roadmap</button>
+          <button class="coder-chip" onclick="setCoderPrompt('Review code ini dan kasih saran improvement bro')">🔍 Code Review</button>
+        </div>
+        <div class="coder-messages" id="coderMessages">
+          <div class="msg-row ai">
+            <div class="msg-avatar">&lt;/&gt;</div>
+            <div class="msg-content">
+              <div class="msg-name">MentorZ Dev</div>
+              <div class="msg-bubble">
+                <p>Yo bro! Gue MentorZ Dev Mode — siap bantu lo di semua hal soal coding. 🔥</p>
+                <p>Stack: JavaScript, Python, React, Node.js, CSS, SQL, dan banyak lagi. <strong>Let's build something W!</strong> 💻</p>
+              </div>
+              <div class="msg-time">Now</div>
+            </div>
+          </div>
+        </div>
+        <div class="typing-wrap hidden" id="coderTyping">
+          <div class="typing-avatar">&lt;/&gt;</div>
+          <div class="typing-bubble"><span></span><span></span><span></span></div>
+          <span class="typing-text">MentorZ lagi nge-code... ⚡</span>
+        </div>
+      </div>
+
+      <!-- Coder Input Dock -->
+      <div class="input-dock">
+        <div class="attach-preview hidden" id="coderAttachPreview">
+          <div class="attach-inner" id="coderAttachInner"></div>
+          <button class="attach-remove" onclick="removeAttachment('coder')">
+            <i class="fa-solid fa-xmark"></i> Hapus
+          </button>
+        </div>
+        <div class="input-box">
+          <input type="file" id="coderPhotoInput" class="hidden"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp"
+            onchange="handleFileSelect(event,'coder')">
+          <input type="file" id="coderFileInput" class="hidden"
+            accept=".txt,.js,.py,.ts,.jsx,.tsx,.html,.css,.json,.md,.csv,.java,.cpp,.c,.cs,.php,.go,.rs,.swift,.xml,.yaml,.yml,.sql,.sh"
+            onchange="handleFileSelect(event,'coder')">
+          <div class="attach-wrap">
+            <button class="attach-btn" onclick="toggleMenu('coderMenu')" title="Lampirkan foto/file">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+            <div class="attach-menu hidden" id="coderMenu">
+              <button onclick="openPhotoPicker('coder')"><i class="fa-solid fa-image"></i> Foto / Gambar</button>
+              <button onclick="openFilePicker('coder')"><i class="fa-solid fa-file-code"></i> File / Code</button>
+            </div>
+          </div>
+          <textarea id="coderInput" class="chat-textarea"
+            placeholder="Paste code lo atau tanya soal coding... 💻"
+            rows="1"
+            onkeydown="handleCoderKey(event)"
+            oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendCoderMessage()" id="coderSendBtn">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+        <div class="input-footer">
+          <span>Always test code lo sendiri ya bro 🤙</span>
+          <button class="clear-btn-sm" onclick="clearCoder()"><i class="fa-solid fa-trash-can"></i> Clear</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end views-wrap -->
+</div><!-- end app-shell -->
+
+<!-- FULLSCREEN IMAGE MODAL -->
+<div class="modal-overlay hidden" id="imgModal" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    <img id="modalImg" src="" alt="">
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
