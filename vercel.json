@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/upload",    "destination": "/api/upload"    },
     { "source": "/api/chat",      "destination": "/api/chat"      },
+    { "source": "/api/upload",    "destination": "/api/upload"    },
     { "source": "/api/image",     "destination": "/api/image"     },
     { "source": "/api/tts",       "destination": "/api/tts"       },
     { "source": "/api/sentiment", "destination": "/api/sentiment" },
