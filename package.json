@@ -1,12 +1,13 @@
 {
   "name": "mentorz",
-  "version": "2.0.0",
-  "description": "MentorZ — AI Mentor Gen Z",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "MentorZ — AI Mentor Gen Z powered by DeepAI",
   "engines": { "node": ">=18.0.0" },
   "dependencies": {
-    "axios": "^1.7.0"
+    "axios": "^1.7.0",
+    "form-data": "^4.0.0"
   },
-  "author": "ryaakbar",
+  "keywords": ["ai", "mentor", "genz", "deepai", "chatbot"],
+  "author": "ryakbar",
   "license": "MIT"
 }
