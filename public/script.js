@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── MODE SWITCH ────────────────────────
 function switchMode(mode) {
     currentMode = mode;
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.mode-view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('view-' + mode).classList.add('active');
-    document.getElementById('tab-' + mode).classList.add('active');
+    document.getElementById(`view-${mode}`).classList.add('active');
+    document.getElementById(`tab-${mode}`).classList.add('active');
 }
 
 // ════════════════════════════════════════
@@ -58,21 +58,10 @@ async function sendMessage() {
     const hero = document.getElementById('chatHero');
     if (hero) hero.classList.add('compact');
 
-    // Process attachment if any
-    const att = attachments.chat;
-    const attachCtx = att ? await processAttachment('chat') : null;
+    appendMessage('user', text);
 
-    // Build message with attachment context
-    const fullMessage = attachCtx ? attachCtx + '
-
-User berkata: ' + text : text;
-
-    // Render user bubble (with attachment preview)
-    appendMessageWithAttach('user', text, att);
-    chatHistory.push({ role: 'user', content: fullMessage });
-
-    // Clear attachment after sending
-    if (att) removeAttachment('chat');
+    // ✅ FIX: kirim 'message' dan 'chatHistory' sesuai yang backend expect
+    chatHistory.push({ role: 'user', content: text });
 
     input.value = '';
     input.style.height = 'auto';
@@ -86,9 +75,10 @@ User berkata: ' + text : text;
         const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            // ✅ FIX UTAMA: field name harus 'message' + 'chatHistory'
             body: JSON.stringify({
-                message: fullMessage,
-                chatHistory: chatHistory.slice(0, -1)
+                message: text,
+                chatHistory: chatHistory.slice(0, -1) // semua kecuali yg baru
             })
         });
 
@@ -106,33 +96,6 @@ User berkata: ' + text : text;
         sendBtn.disabled = false;
         input.focus();
     }
-}
-
-function appendMessageWithAttach(role, content, att, context = 'chat') {
-    const wrap  = context === 'coder' ? document.getElementById('coderMessages') : document.getElementById('chatMessages');
-    const isAI  = role === 'ai';
-    const time   = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    const row = document.createElement('div');
-    row.className = `msg-row ${role}`;
-    const attachHtml = (!isAI && att) ? renderAttachBubble(att) : '';
-    const parsedContent = parseMarkdown(content);
-    row.innerHTML = `
-        <div class="msg-avatar">${isAI ? 'Z' : '👤'}</div>
-        <div class="msg-content">
-            <div class="msg-name">${isAI ? 'MentorZ' : 'You'}</div>
-            ${attachHtml}
-            <div class="msg-bubble">${parsedContent}</div>
-            <div class="msg-actions">
-                ${isAI ? `
-                    <button class="msg-action-btn" onclick="copyMsg(this)">📋 Copy</button>
-                    <button class="msg-action-btn" onclick="regenerateMsg(this)">🔄 Regen</button>
-                ` : ''}
-            </div>
-            <div class="msg-time">${time}</div>
-        </div>
-    `;
-    wrap.appendChild(row);
-    wrap.scrollTop = wrap.scrollHeight;
 }
 
 function appendMessage(role, content) {
@@ -397,16 +360,8 @@ async function sendCoderMessage() {
     const text  = input.value.trim();
     if (!text || isCoderTyping) return;
 
-    const attCoder = attachments.coder;
-    const attachCtxCoder = attCoder ? await processAttachment('coder') : null;
-    const fullMsgCoder = attachCtxCoder ? attachCtxCoder + '
-
-User berkata: ' + text : text;
-
-    appendMessageWithAttach('user', text, attCoder, 'coder');
-    coderHistory.push({ role: 'user', content: fullMsgCoder });
-
-    if (attCoder) removeAttachment('coder');
+    appendCoderMessage('user', text);
+    coderHistory.push({ role: 'user', content: text });
 
     input.value = '';
 
@@ -430,7 +385,7 @@ Selalu format code dengan proper code blocks. Kasih penjelasan singkat sebelum d
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                message: fullMsgCoder,
+                message: text,
                 chatHistory: coderHistory.slice(0, -1),
                 userName: 'Coder Mode - ' + systemMsg
             })
@@ -571,309 +526,229 @@ function showToast(msg, duration = 2800) {
 }
 
 // ════════════════════════════════════════
-// FILE / IMAGE ATTACHMENT SYSTEM
+// UPLOAD / ATTACH FEATURE
 // ════════════════════════════════════════
 
-// State: pending attachment per mode
-const attachments = { chat: null, coder: null };
+let pendingUpload = null; // { type: 'image'|'file', data, mimeType, fileName, previewUrl? }
 
-// Supported image MIME types
-const IMAGE_TYPES = ['image/jpeg','image/jpg','image/png','image/gif','image/webp','image/bmp','image/svg+xml'];
+const ALLOWED_TEXT_EXTS = new Set([
+    'txt','md','js','ts','jsx','tsx','py','html','css','json','csv',
+    'java','c','cpp','cs','php','rb','go','rs','swift','kt','sh','yaml','yml','xml','sql'
+]);
+const MAX_FILE_BYTES  = 5 * 1024 * 1024; // 5 MB
 
-// Max file size: 5MB
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-// Text-based file extensions
-const TEXT_EXTS = ['txt','js','py','ts','jsx','tsx','html','css','json','md','csv','xml','yaml','yml','java','cpp','c','cs','php','rb','go','rs','swift','sh','sql','graphql','vue','svelte'];
-
-async function handleFileSelect(event, mode) {
-    const file = event.target.files[0];
+// ── File selected from <input type="file"> ─────────────────────────────────────
+function handleFileSelect(event) {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // reset so same file can be re-selected
     if (!file) return;
 
-    // Reset input so same file can be re-selected
-    event.target.value = '';
-
-    if (file.size > MAX_FILE_SIZE) {
-        showToast(`❌ File terlalu besar bro! Max 5MB.`);
+    if (file.size > MAX_FILE_BYTES) {
+        showToast('⚠️ File terlalu besar bro! Maks 5 MB ya.');
         return;
     }
 
-    const isImage = IMAGE_TYPES.includes(file.type) || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.name);
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    const isText = TEXT_EXTS.includes(ext) || file.type.startsWith('text/');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const isImage = file.type.startsWith('image/');
 
-    if (!isImage && !isText) {
-        showToast(`❌ Format tidak didukung bro. Pakai gambar atau file teks/code.`);
-        return;
-    }
-
-    showToast(`⏳ Memproses ${isImage ? 'gambar' : 'file'}...`);
-
-    try {
-        let attachment = null;
-
-        if (isImage) {
-            // Read as base64 for preview + upload
-            const base64 = await readFileAsBase64(file);
-            attachment = {
-                type: 'image',
-                file,
-                base64: base64.split(',')[1], // strip data:...;base64,
-                mimeType: file.type || 'image/jpeg',
-                fileName: file.name,
-                previewUrl: base64,
-                status: 'ready',
-                contextForChat: null,
-            };
-        } else {
-            // Read as text
-            const text = await readFileAsText(file);
-            attachment = {
-                type: 'file',
-                file,
-                text,
-                ext,
-                fileName: file.name,
-                status: 'ready',
-                contextForChat: null,
-            };
-        }
-
-        attachments[mode] = attachment;
-        renderAttachPreview(mode);
-        showToast(`✅ ${isImage ? 'Gambar' : 'File'} siap dikirim bro!`);
-
-    } catch (err) {
-        showToast(`❌ Gagal baca file: ${err.message}`);
-    }
-}
-
-function readFileAsBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
-        reader.onerror = () => reject(new Error('Gagal baca file'));
-        reader.readAsDataURL(file);
-    });
-}
-
-function readFileAsText(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = e => resolve(e.target.result);
-        reader.onerror = () => reject(new Error('Gagal baca file'));
-        reader.readAsText(file, 'UTF-8');
-    });
-}
-
-function renderAttachPreview(mode) {
-    const att = attachments[mode];
-    const previewEl = document.getElementById(`${mode}AttachPreview`);
-    const innerEl   = document.getElementById(`${mode}AttachInner`);
-    if (!previewEl || !innerEl || !att) return;
-
-    if (att.type === 'image') {
-        innerEl.innerHTML = `
-            <img class="attach-thumb" src="${att.previewUrl}" alt="${escHtml(att.fileName)}">
-            <div class="attach-info">
-                <span class="attach-name">${escHtml(att.fileName)}</span>
-                <span class="attach-size">${formatFileSize(att.file.size)}</span>
-                <span class="attach-tag image-tag">🖼️ Gambar</span>
-            </div>`;
+    if (isImage) {
+        _prepareImage(file);
+    } else if (ALLOWED_TEXT_EXTS.has(ext)) {
+        _prepareTextFile(file);
     } else {
-        const preview = att.text.slice(0, 120).replace(/\n/g, ' ');
-        innerEl.innerHTML = `
-            <div class="attach-file-icon">${getFileIcon(att.ext)}</div>
-            <div class="attach-info">
-                <span class="attach-name">${escHtml(att.fileName)}</span>
-                <span class="attach-size">${formatFileSize(att.file.size)} • ${att.text.split('\n').length} baris</span>
-                <span class="attach-preview-text">${escHtml(preview)}...</span>
-            </div>`;
-    }
-
-    previewEl.classList.remove('hidden');
-}
-
-function removeAttachment(mode) {
-    attachments[mode] = null;
-    const previewEl = document.getElementById(`${mode}AttachPreview`);
-    if (previewEl) previewEl.classList.add('hidden');
-    showToast('🗑️ Lampiran dihapus');
-}
-
-// Called before sending — upload attachment and get context string
-async function processAttachment(mode) {
-    const att = attachments[mode];
-    if (!att) return null;
-
-    // Already processed
-    if (att.contextForChat) return att.contextForChat;
-
-    try {
-        showToast(`⏳ ${att.type === 'image' ? 'Menganalisis gambar' : 'Memproses file'}...`);
-
-        const payload = att.type === 'image'
-            ? { type: 'image', data: att.base64, mimeType: att.mimeType, fileName: att.fileName }
-            : { type: 'file', data: att.text, fileName: att.fileName };
-
-        const res = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Upload failed');
-
-        att.contextForChat = data.contextForChat;
-        return data.contextForChat;
-
-    } catch (err) {
-        // Fallback: build context locally without AI analysis
-        if (att.type === 'image') {
-            return `[USER MENGIRIM GAMBAR: "${att.fileName}". Gambar tidak bisa dianalisis otomatis. User ingin mendiskusikannya.]`;
-        } else {
-            const truncated = att.text.slice(0, 6000);
-            return `[USER MENGIRIM FILE: "${att.fileName}".\nIsi file:\n\`\`\`${att.ext}\n${truncated}\n\`\`\`]`;
-        }
+        showToast(`⚠️ Tipe file .${ext} belum didukung bro.`);
     }
 }
 
-// Render attachment in chat bubble
-function renderAttachBubble(att) {
-    if (!att) return '';
-    if (att.type === 'image') {
-        return `<div class="msg-attach-image">
-            <img src="${att.previewUrl}" alt="${escHtml(att.fileName)}" class="msg-img-thumb" onclick="openFullscreen(this)">
-            <span class="msg-img-caption">📎 ${escHtml(att.fileName)}</span>
-        </div>`;
-    } else {
-        return `<div class="msg-attach-file">
-            <span>${getFileIcon(att.ext)}</span>
-            <span class="msg-file-name">${escHtml(att.fileName)}</span>
-            <span class="msg-file-size">${formatFileSize(att.file.size)}</span>
-        </div>`;
-    }
-}
+function _prepareImage(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const dataUrl  = e.target.result;               // "data:image/jpeg;base64,..."
+        const base64   = dataUrl.split(',')[1];
+        const previewUrl = dataUrl;
 
-// ── UTILS ──────────────────────────────
-function formatFileSize(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
-    return (bytes/1024/1024).toFixed(1) + ' MB';
-}
+        pendingUpload = {
+            type     : 'image',
+            data     : base64,
+            mimeType : file.type,
+            fileName : file.name,
+            previewUrl,
+        };
 
-function getFileIcon(ext) {
-    const map = {
-        js:'🟨', ts:'🔷', py:'🐍', html:'🌐', css:'🎨',
-        json:'📋', md:'📝', txt:'📄', csv:'📊', sql:'🗄️',
-        java:'☕', cpp:'⚙️', c:'⚙️', php:'🐘', rb:'💎',
-        go:'🐹', rs:'🦀', swift:'🍎', sh:'💻', vue:'💚',
+        _showUploadBadge(`🖼️ ${file.name}`);
+        showToast('📎 Gambar siap dikirim bro!');
     };
-    return map[ext] || '📄';
+    reader.readAsDataURL(file);
 }
 
-// ── DRAG & DROP ────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    ['chat','coder'].forEach(mode => {
-        // Find the input box for this mode
-        const inputId = mode === 'chat' ? 'chatInput' : 'coderInput';
-        const inputEl = document.getElementById(inputId);
-        if (!inputEl) return;
+function _prepareTextFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        pendingUpload = {
+            type    : 'file',
+            data    : e.target.result,
+            fileName: file.name,
+        };
+        _showUploadBadge(`📄 ${file.name}`);
+        showToast('📎 File siap dikirim bro!');
+    };
+    reader.readAsText(file);
+}
 
-        const box = inputEl.closest('.chat-input-box') || inputEl.parentElement;
+function _showUploadBadge(label) {
+    const preview = document.getElementById('uploadPreview');
+    document.getElementById('uploadPreviewLabel').textContent = label;
+    preview.classList.remove('hidden');
+    document.querySelector('.attach-btn')?.classList.add('has-file');
+}
 
-        box.addEventListener('dragover', e => {
-            e.preventDefault();
-            box.classList.add('drag-over');
-        });
-        box.addEventListener('dragleave', () => box.classList.remove('drag-over'));
-        box.addEventListener('drop', e => {
-            e.preventDefault();
-            box.classList.remove('drag-over');
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                // Simulate file select
-                handleFileSelect({ target: { files: [file], value: '' }, preventDefault: ()=>{} }, mode);
-            }
-        });
-    });
-});
+function removeUpload() {
+    pendingUpload = null;
+    document.getElementById('uploadPreview').classList.add('hidden');
+    document.querySelector('.attach-btn')?.classList.remove('has-file');
+    showToast('🗑️ Attachment dihapus.');
+}
 
-// ════════════════════════════════════════
-// ATTACH MENU — Photo vs File picker
-// ════════════════════════════════════════
+// ── Override sendMessage to inject upload context ──────────────────────────────
+const _originalSendMessage = sendMessage;
 
-function toggleMenu(menuId) {
-    const menu = document.getElementById(menuId);
-    if (!menu) return;
-    const isHidden = menu.classList.contains('hidden');
-    // Close all menus first
-    document.querySelectorAll('.attach-menu').forEach(m => m.classList.add('hidden'));
-    if (isHidden) {
-        menu.classList.remove('hidden');
-        // Close when clicking outside
-        setTimeout(() => {
-            document.addEventListener('click', function handler(e) {
-                if (!e.target.closest('.attach-wrap')) {
-                    menu.classList.add('hidden');
-                    document.removeEventListener('click', handler);
-                }
-            });
-        }, 10);
+// Re-define sendMessage to handle upload flow
+window.sendMessage = async function () {
+    if (!pendingUpload) {
+        // No attachment — normal flow
+        return _originalSendMessage();
     }
+
+    const input = document.getElementById('chatInput');
+    const text  = input.value.trim();
+    if (isTyping) return;
+
+    const hero = document.getElementById('chatHero');
+    if (hero) hero.classList.add('compact');
+
+    // Show user message with image thumbnail if applicable
+    if (pendingUpload.type === 'image' && pendingUpload.previewUrl) {
+        _appendMessageWithImage('user', text || '📎 (gambar dikirim)', pendingUpload.previewUrl, pendingUpload.fileName);
+    } else {
+        appendMessage('user', text || `📎 (file: ${pendingUpload.fileName})`);
+    }
+
+    input.value = '';
+    input.style.height = 'auto';
+    updateCharCount();
+
+    setTyping(true);
+    document.getElementById('sendBtn').disabled = true;
+
+    // Clear badge immediately for UX
+    const uploadSnapshot = { ...pendingUpload };
+    removeUpload();
+
+    try {
+        // Step 1: Call /api/upload
+        showToast('⏳ Memproses attachment...', 8000);
+        const upRes = await fetch('/api/upload', {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body   : JSON.stringify({
+                type    : uploadSnapshot.type,
+                data    : uploadSnapshot.data,
+                mimeType: uploadSnapshot.mimeType,
+                fileName: uploadSnapshot.fileName,
+            }),
+        });
+        const upData = await upRes.json();
+        if (!upRes.ok) throw new Error(upData.error || 'Upload failed');
+
+        const contextForChat = upData.contextForChat || '';
+        const userMessage    = text
+            ? `${text}\n\n${contextForChat}`
+            : contextForChat;
+
+        chatHistory.push({ role: 'user', content: userMessage });
+
+        // Step 2: Send to /api/chat with upload context
+        const chatRes = await fetch('/api/chat', {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body   : JSON.stringify({
+                message    : userMessage,
+                chatHistory: chatHistory.slice(0, -1),
+            }),
+        });
+        const chatData = await chatRes.json();
+        if (!chatRes.ok) throw new Error(chatData.error || 'Chat failed');
+
+        const reply = chatData.reply || 'Hmm MentorZ bingung nih bro 😅';
+        chatHistory.push({ role: 'assistant', content: reply });
+        appendMessage('ai', reply);
+
+    } catch (err) {
+        appendMessage('ai', `Bro ada error waktu proses attachment: ${err.message} 💀\n\nCoba lagi atau kirim ulang.`);
+    } finally {
+        setTyping(false);
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('chatInput').focus();
+    }
+};
+
+// Append message with inline image thumbnail
+function _appendMessageWithImage(role, text, imageUrl, fileName) {
+    const wrap  = document.getElementById('chatMessages');
+    const isAI  = role === 'ai';
+    const time  = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+    const row = document.createElement('div');
+    row.className = `msg-row ${role}`;
+
+    const safeText = parseMarkdown(text);
+    const safeFile = escHtml(fileName || 'image');
+
+    row.innerHTML = `
+        <div class="msg-avatar">${isAI ? 'Z' : '👤'}</div>
+        <div class="msg-content">
+            <div class="msg-name">${isAI ? 'MentorZ' : 'You'}</div>
+            <div class="msg-bubble">
+                <img src="${escHtml(imageUrl)}" class="upload-img-thumb" alt="${safeFile}" />
+                ${safeText ? `<div>${safeText}</div>` : ''}
+            </div>
+            <div class="msg-time">${time}</div>
+        </div>
+    `;
+
+    wrap.appendChild(row);
+    wrap.scrollTop = wrap.scrollHeight;
 }
-function toggleAttachMenu(mode) { toggleMenu(mode + 'Menu'); }
 
-function openPhotoPicker(mode) {
-    closeAllMenus();
-    const inputId = mode === 'chat' ? 'chatPhotoInput' : 'coderPhotoInput';
-    document.getElementById(inputId)?.click();
-}
+// ── NAVBAR SCROLL & REVEAL (MDP Style) ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    const scrollBtns = document.getElementById('scrollBtns');
 
-function openFilePicker(mode) {
-    closeAllMenus();
-    const inputId = mode === 'chat' ? 'chatFileInput' : 'coderFileInput';
-    document.getElementById(inputId)?.click();
-}
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 20) {
+            navbar?.classList.add('scrolled');
+            scrollBtns?.classList.add('visible');
+        } else {
+            navbar?.classList.remove('scrolled');
+            scrollBtns?.classList.remove('visible');
+        }
+    });
 
-function pickPhoto(mode) { openPhotoPicker(mode); }
-function pickFile(mode)  { openFilePicker(mode); }
+    // Reveal on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(el => {
+            if (el.isIntersecting) el.target.classList.add('visible');
+        });
+    }, { threshold: 0.12 });
 
-function closeAllMenus() {
-    document.querySelectorAll('.attach-menu').forEach(m => m.classList.add('hidden'));
-}
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// ═══════════════════════════════════════════
-// MDP-STYLE: Reveal animation + Navbar scroll
-// FIX: Force-visible immediately, no observer lag
-// ═══════════════════════════════════════════
-
-function runReveal() {
-  // Mark all reveal elements as visible immediately
-  // (no waiting for IntersectionObserver which can miss on mobile)
-  document.querySelectorAll('.reveal').forEach((el, i) => {
-    const delay = i * 60; // stagger each element by 60ms
-    setTimeout(() => el.classList.add('visible'), delay);
-  });
-}
-
-// Navbar scroll effect
-const navEl = document.getElementById('navbar');
-document.querySelectorAll('.view-scroll').forEach(scroll => {
-  scroll.addEventListener('scroll', () => {
-    if (navEl) navEl.classList.toggle('scrolled', scroll.scrollTop > 20);
-  }, { passive: true });
-});
-
-// Run on load — multiple attempts to ensure it fires
-document.addEventListener('DOMContentLoaded', () => { setTimeout(runReveal, 80); });
-window.addEventListener('load', () => { setTimeout(runReveal, 100); });
-setTimeout(runReveal, 150);
-setTimeout(runReveal, 400); // fallback
-
-// Re-run when switching tabs
-const _navTabs = document.querySelectorAll('.nav-tab');
-_navTabs.forEach(tab => {
-  tab.addEventListener('click', () => setTimeout(runReveal, 80));
+    // Also trigger reveal for mode view page headers
+    const modeHeaders = document.querySelectorAll('#view-image .page-header, #view-coder .page-header');
+    modeHeaders.forEach(el => {
+        el.classList.add('reveal');
+        observer.observe(el);
+    });
 });
