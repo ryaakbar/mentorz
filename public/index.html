@@ -5,43 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MentorZ — AI Mentor Gen Z</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- NOISE OVERLAY -->
-<div class="noise"></div>
-
-<!-- BG BLOBS -->
-<div class="blob blob-1"></div>
-<div class="blob blob-2"></div>
-<div class="blob blob-3"></div>
+<!-- BACKGROUND ORBS -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
 
 <!-- MARQUEE -->
-<div class="marquee-bar">
-  <div class="marquee-track">
-    <span>MENTORZ AI ◆ GEN Z MENTOR ◆ POWERED BY DEEPAI ◆ CHAT · IMAGE · MENTOR ◆ FR FR NO CAP ◆ SLAY BESTIE 🔥 ◆ MENTORZ AI ◆ GEN Z MENTOR ◆ POWERED BY DEEPAI ◆ CHAT · IMAGE · MENTOR ◆ FR FR NO CAP ◆ SLAY BESTIE 🔥 ◆</span>
+<div class="marquee-top">
+  <div class="marquee-content">
+    MENTORZ AI <span class="marquee-dot">◆</span>
+    GEN Z MENTOR <span class="marquee-dot">◆</span>
+    POWERED BY DEEPAI <span class="marquee-dot">◆</span>
+    CHAT · IMAGE · CODE <span class="marquee-dot">◆</span>
+    BUILT BY RYAAKBAR <span class="marquee-dot">◆</span>
+    NO BS, REAL TALK <span class="marquee-dot">◆</span>
+    MENTORZ AI <span class="marquee-dot">◆</span>
+    GEN Z MENTOR <span class="marquee-dot">◆</span>
+    POWERED BY DEEPAI <span class="marquee-dot">◆</span>
+    CHAT · IMAGE · CODE <span class="marquee-dot">◆</span>
+    BUILT BY RYAAKBAR <span class="marquee-dot">◆</span>
+    NO BS, REAL TALK <span class="marquee-dot">◆</span>
   </div>
 </div>
 
 <!-- NAVBAR -->
-<nav class="navbar">
-  <div class="nav-brand">
-    <div class="nav-logo">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <rect width="28" height="28" rx="8" fill="url(#logograd)"/>
-        <path d="M8 18L12 10L16 16L18 12L20 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <defs>
-          <linearGradient id="logograd" x1="0" y1="0" x2="28" y2="28">
-            <stop offset="0%" stop-color="#6366f1"/>
-            <stop offset="100%" stop-color="#06b6d4"/>
-          </linearGradient>
-        </defs>
+<nav class="navbar" id="navbar">
+  <div class="brand-container">
+    <div class="brand-icon-wrap">
+      <svg width="18" height="18" viewBox="0 0 28 28" fill="none">
+        <path d="M8 18L12 10L16 16L18 12L20 18" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <span class="nav-title">MENTOR<span class="nav-accent">Z</span></span>
+    <div class="brand-glitch">MENTOR<span>Z</span></div>
   </div>
 
   <div class="nav-tabs">
@@ -57,12 +58,12 @@
   </div>
 
   <div class="nav-right">
-    <button class="btn-clear" onclick="clearChat()" title="Clear chat">
+    <button class="btn-icon-nav" onclick="clearChat()" title="Clear chat">
       <i class="fa-solid fa-trash-can"></i>
     </button>
-    <div class="nav-status">
-      <span class="status-dot"></span>
-      <span>LIVE</span>
+    <div class="status-pill">
+      <div class="dot-live"></div>
+      LIVE
     </div>
   </div>
 </nav>
@@ -72,71 +73,57 @@
 <!-- ══════════════════════════════════ -->
 <div class="mode-view active" id="view-chat">
 
-  <!-- HERO (shown before first message) -->
+  <!-- HERO -->
   <div class="chat-hero" id="chatHero">
-    <div class="hero-badge">✨ AI MENTOR GEN Z</div>
-    <h1 class="hero-title">Hey bestie,<br><span class="hero-grad">let's slay! 🔥</span></h1>
-    <p class="hero-sub">Gue MentorZ — your AI mentor yang siap bantu lo level up di semua bidang. No cap, fr fr! 💯</p>
+    <div class="hero-badge">⚡ AI MENTOR GEN Z</div>
+    <h1 class="hero-title">Yo bro,<br><span class="hero-grad">gue MentorZ! 🔥</span></h1>
+    <p class="hero-sub">AI mentor yang nemenin lo level up — dari skill, karir, coding, sampe finansial. Real talk, no drama.</p>
 
     <div class="hero-chips">
-      <button class="hero-chip" onclick="sendQuick('Hei MentorZ! Perkenalkan diri dong, lo siapa sih? 👀')">👋 Kenalan dulu</button>
-      <button class="hero-chip" onclick="sendQuick('Tips produktivitas buat Gen Z yang sering overthinking dong 🧠')">🧠 Produktivitas</button>
-      <button class="hero-chip" onclick="sendQuick('Cara belajar coding dari nol buat pemula gimana bestie? 💻')">💻 Belajar Coding</button>
+      <button class="hero-chip" onclick="sendQuick('Hei MentorZ! Perkenalkan diri lo dong, lo bisa bantu apa aja? 👀')">👋 Kenalan dulu</button>
+      <button class="hero-chip" onclick="sendQuick('Tips produktivitas buat yang sering overthinking dong 🧠')">🧠 Produktivitas</button>
+      <button class="hero-chip" onclick="sendQuick('Cara belajar coding dari nol buat pemula gimana bro? 💻')">💻 Belajar Coding</button>
       <button class="hero-chip" onclick="sendQuick('Gimana cara manage keuangan yang oke buat fresh grad? 💰')">💰 Finansial</button>
-      <button class="hero-chip" onclick="sendQuick('Mental health tips buat Gen Z yang gampang burnout 🫶')">🫶 Mental Health</button>
-      <button class="hero-chip" onclick="sendQuick('Content creator tips yang lagi viral 2026 apa nih? 🚀')">🚀 Content Creator</button>
+      <button class="hero-chip" onclick="sendQuick('Mental health tips buat yang gampang burnout 🫶')">🫶 Mental Health</button>
+      <button class="hero-chip" onclick="sendQuick('Content creator tips yang lagi ngehits 2026 apa nih? 🚀')">🚀 Content Creator</button>
     </div>
 
     <div class="hero-features">
       <div class="hf-item"><i class="fa-solid fa-bolt"></i> Real-time AI</div>
       <div class="hf-item"><i class="fa-solid fa-brain"></i> Multi-topic</div>
-      <div class="hf-item"><i class="fa-solid fa-shield-halved"></i> No Filter BS</div>
+      <div class="hf-item"><i class="fa-solid fa-shield-halved"></i> No BS</div>
       <div class="hf-item"><i class="fa-solid fa-fire"></i> Gen Z Vibes</div>
     </div>
   </div>
 
-  <!-- CHAT MESSAGES -->
+  <!-- MESSAGES -->
   <div class="chat-messages" id="chatMessages"></div>
 
-  <!-- TYPING INDICATOR -->
+  <!-- TYPING -->
   <div class="typing-wrap hidden" id="typingWrap">
     <div class="typing-avatar">Z</div>
-    <div class="typing-bubble">
-      <span></span><span></span><span></span>
-    </div>
+    <div class="typing-bubble"><span></span><span></span><span></span></div>
     <span class="typing-text">MentorZ lagi mikir... 🤔</span>
   </div>
 
-  <!-- INPUT AREA -->
+  <!-- INPUT -->
   <div class="chat-input-wrap">
-
-    <!-- Hidden file input -->
-    <input type="file" id="fileInput" class="hidden"
-      accept="image/*,.pdf,.txt,.md,.js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.cs,.go,.rs,.php,.html,.css,.json,.sql,.sh,.yaml,.yml"
-      onchange="handleFileUpload(this)">
-
-    <!-- Upload preview bar -->
     <div class="upload-preview hidden" id="uploadPreview">
-      <span id="upIcon">📄</span>
-      <span class="up-name" id="upName"></span>
-      <span class="up-status" id="upStatus"></span>
-      <button class="up-dismiss" onclick="cancelUpload()" title="Batal">✕</button>
+      <span id="uploadPreviewLabel">📎 file</span>
+      <button class="upload-remove-btn" onclick="removeUpload()" title="Hapus">✕</button>
     </div>
-
     <div class="chat-input-box">
-      <button class="attach-btn" onclick="triggerFileUpload()" title="Kirim gambar atau file">
+      <input type="file" id="fileInput"
+        accept="image/*,.txt,.md,.js,.ts,.py,.html,.css,.json,.csv,.jsx,.tsx,.java,.c,.cpp,.cs,.php,.rb,.go,.rs,.swift,.kt"
+        style="display:none" onchange="handleFileSelect(event)"/>
+      <button class="input-btn attach-btn" onclick="document.getElementById('fileInput').click()" title="Attach file atau foto">
         <i class="fa-solid fa-paperclip"></i>
       </button>
-      <textarea
-        id="chatInput"
-        class="chat-textarea"
+      <textarea id="chatInput" class="chat-textarea"
         placeholder="Tanya apapun ke MentorZ... ⚡"
-        rows="1"
-        onkeydown="handleKey(event)"
-        oninput="autoResize(this)"
-      ></textarea>
+        rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <div class="input-actions">
-        <button class="input-btn" onclick="sendMessage()" id="sendBtn" title="Send">
+        <button class="input-btn send-btn" onclick="sendMessage()" id="sendBtn" title="Send">
           <i class="fa-solid fa-paper-plane"></i>
         </button>
       </div>
@@ -154,83 +141,82 @@
 <!-- ══════════════════════════════════ -->
 <div class="mode-view" id="view-image">
 
-  <div class="page-header">
-    <div class="page-badge">🎨 AI IMAGE GEN</div>
-    <h1 class="page-title">Generate Gambar<br><span class="page-grad">dari Teks ✨</span></h1>
-    <p class="page-sub">Deskripsiin gambar lo dalam kata-kata, MentorZ yang bikin. Literally slay! 🔥</p>
+  <div class="page-header reveal">
+    <div class="hero-badge">🎨 AI IMAGE GEN</div>
+    <h1 class="hero-title">Generate Gambar<br><span class="hero-grad">dari Teks ✨</span></h1>
+    <p class="hero-sub">Deskripsiin gambar lo dalam kata-kata, MentorZ yang eksekusi. Hasilnya W, gue jamin.</p>
   </div>
 
-  <div class="image-workspace">
+  <div class="image-workspace reveal delay-1">
 
-    <!-- LEFT: CONTROLS -->
-    <div class="image-controls">
-      <div class="ctrl-section">
-        <label class="ctrl-label">Describe your image 📝</label>
-        <textarea
-          id="imagePrompt"
-          class="ctrl-textarea"
-          placeholder="Contoh: A futuristic city at night with neon lights, cyberpunk style, ultra detailed 4K..."
-          rows="4"
-        ></textarea>
-      </div>
-
-      <div class="ctrl-section">
-        <label class="ctrl-label">Style 🎨</label>
-        <div class="style-grid">
-          <button class="style-btn active" data-style="" onclick="selectStyle(this, '')">Default</button>
-          <button class="style-btn" data-style="realistic photo" onclick="selectStyle(this, 'realistic photo')">Realistic</button>
-          <button class="style-btn" data-style="anime" onclick="selectStyle(this, 'anime')">Anime</button>
-          <button class="style-btn" data-style="cyberpunk" onclick="selectStyle(this, 'cyberpunk')">Cyberpunk</button>
-          <button class="style-btn" data-style="oil painting" onclick="selectStyle(this, 'oil painting')">Oil Paint</button>
-          <button class="style-btn" data-style="watercolor" onclick="selectStyle(this, 'watercolor')">Watercolor</button>
-          <button class="style-btn" data-style="3D render" onclick="selectStyle(this, '3D render')">3D Render</button>
-          <button class="style-btn" data-style="sketch pencil drawing" onclick="selectStyle(this, 'sketch pencil drawing')">Sketch</button>
-          <button class="style-btn" data-style="pixel art" onclick="selectStyle(this, 'pixel art')">Pixel Art</button>
-          <button class="style-btn" data-style="fantasy illustration" onclick="selectStyle(this, 'fantasy illustration')">Fantasy</button>
+    <div class="image-controls glass-card">
+      <div class="card-body">
+        <div class="ctrl-section">
+          <label class="input-label">DESCRIBE YOUR IMAGE 📝</label>
+          <textarea id="imagePrompt" class="cyber-input ctrl-textarea"
+            placeholder="Contoh: A futuristic city at night with neon lights, cyberpunk style, ultra detailed 4K..."
+            rows="4"></textarea>
         </div>
-      </div>
 
-      <div class="ctrl-section">
-        <label class="ctrl-label">Quick Prompts 💡</label>
-        <div class="quick-prompts">
-          <button class="qp-btn" onclick="setPrompt('A stunning anime girl with glowing blue eyes in a neon city at night')">🌙 Anime City</button>
-          <button class="qp-btn" onclick="setPrompt('Majestic dragon flying over a mountain with aurora borealis, epic fantasy art')">🐉 Dragon Epic</button>
-          <button class="qp-btn" onclick="setPrompt('Futuristic robot with neon lights, cyberpunk aesthetic, ultra detailed')">🤖 Cyber Robot</button>
-          <button class="qp-btn" onclick="setPrompt('Beautiful Indonesian landscape with rice terraces at golden hour')">🌾 Indonesia</button>
-          <button class="qp-btn" onclick="setPrompt('Abstract digital art with vibrant colors and geometric patterns')">🎨 Abstract</button>
-          <button class="qp-btn" onclick="setPrompt('Cozy cafe interior with warm lighting, books, and coffee aesthetic')">☕ Cozy Cafe</button>
+        <div class="ctrl-section">
+          <label class="input-label">STYLE 🎨</label>
+          <div class="style-grid">
+            <button class="style-btn active" data-style="" onclick="selectStyle(this, '')">Default</button>
+            <button class="style-btn" data-style="realistic photo" onclick="selectStyle(this, 'realistic photo')">Realistic</button>
+            <button class="style-btn" data-style="anime" onclick="selectStyle(this, 'anime')">Anime</button>
+            <button class="style-btn" data-style="cyberpunk" onclick="selectStyle(this, 'cyberpunk')">Cyberpunk</button>
+            <button class="style-btn" data-style="oil painting" onclick="selectStyle(this, 'oil painting')">Oil Paint</button>
+            <button class="style-btn" data-style="watercolor" onclick="selectStyle(this, 'watercolor')">Watercolor</button>
+            <button class="style-btn" data-style="3D render" onclick="selectStyle(this, '3D render')">3D Render</button>
+            <button class="style-btn" data-style="sketch pencil drawing" onclick="selectStyle(this, 'sketch pencil drawing')">Sketch</button>
+            <button class="style-btn" data-style="pixel art" onclick="selectStyle(this, 'pixel art')">Pixel Art</button>
+            <button class="style-btn" data-style="fantasy illustration" onclick="selectStyle(this, 'fantasy illustration')">Fantasy</button>
+          </div>
         </div>
-      </div>
 
-      <button class="btn-generate" onclick="generateImage()" id="generateBtn">
-        <i class="fa-solid fa-wand-magic-sparkles"></i>
-        <span>Generate Image</span>
-      </button>
+        <div class="ctrl-section">
+          <label class="input-label">QUICK PROMPTS 💡</label>
+          <div class="quick-prompts">
+            <button class="qp-btn" onclick="setPrompt('A stunning anime girl with glowing blue eyes in a neon city at night')">🌙 Anime City</button>
+            <button class="qp-btn" onclick="setPrompt('Majestic dragon flying over a mountain with aurora borealis, epic fantasy art')">🐉 Dragon Epic</button>
+            <button class="qp-btn" onclick="setPrompt('Futuristic robot with neon lights, cyberpunk aesthetic, ultra detailed')">🤖 Cyber Robot</button>
+            <button class="qp-btn" onclick="setPrompt('Beautiful Indonesian landscape with rice terraces at golden hour')">🌾 Indonesia</button>
+            <button class="qp-btn" onclick="setPrompt('Abstract digital art with vibrant colors and geometric patterns')">🎨 Abstract</button>
+            <button class="qp-btn" onclick="setPrompt('Cozy cafe interior with warm lighting, books, and coffee aesthetic')">☕ Cozy Cafe</button>
+          </div>
+        </div>
+
+        <button class="cyber-button" onclick="generateImage()" id="generateBtn">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Generate Image</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
     </div>
 
-    <!-- RIGHT: RESULT -->
-    <div class="image-result">
+    <div class="image-result glass-card">
       <div class="result-placeholder" id="imgPlaceholder">
         <div class="placeholder-icon">🎨</div>
-        <p>Your image will appear here</p>
-        <span>Describe something iconic bestie!</span>
+        <p>Gambar lo akan muncul di sini</p>
+        <span>Deskripsiin sesuatu yang keren bro!</span>
       </div>
       <div class="result-loading hidden" id="imgLoading">
-        <div class="gen-spinner"></div>
+        <div class="loader-ring"></div>
         <p>MentorZ lagi nge-generate...</p>
-        <span>Usually 10-30 seconds. Literally worth the wait! ⏳</span>
+        <span>Sabar ya bro, biasanya 10-30 detik ⏳</span>
+        <div class="loader-progress"><div class="loader-bar"></div></div>
       </div>
       <div class="result-image-wrap hidden" id="imgResult">
         <img id="generatedImg" src="" alt="Generated image" onclick="openFullscreen(this)">
         <div class="img-actions">
-          <button class="img-btn" onclick="downloadImage()">
+          <button class="btn-download" onclick="downloadImage()">
             <i class="fa-solid fa-download"></i> Download
           </button>
-          <button class="img-btn" onclick="regenerateImage()">
+          <button class="btn-download" onclick="regenerateImage()">
             <i class="fa-solid fa-rotate"></i> Regenerate
           </button>
-          <button class="img-btn" onclick="shareToChat()">
-            <i class="fa-solid fa-share"></i> Chat
+          <button class="btn-download" onclick="shareToChat()">
+            <i class="fa-solid fa-share"></i> Share ke Chat
           </button>
         </div>
         <div class="img-prompt-used" id="imgPromptUsed"></div>
@@ -238,8 +224,7 @@
     </div>
   </div>
 
-  <!-- IMAGE HISTORY -->
-  <div class="img-history-wrap" id="imgHistoryWrap" style="display:none">
+  <div class="img-history-wrap reveal" id="imgHistoryWrap" style="display:none">
     <div class="ih-header">
       <span>History 🗂️</span>
       <button onclick="clearImgHistory()"><i class="fa-solid fa-trash-can"></i></button>
@@ -254,14 +239,13 @@
 <!-- ══════════════════════════════════ -->
 <div class="mode-view" id="view-coder">
 
-  <div class="page-header">
-    <div class="page-badge">💻 AI CODING ASSISTANT</div>
-    <h1 class="page-title">MentorZ<br><span class="page-grad">Dev Mode ⚡</span></h1>
-    <p class="page-sub">Tanya apapun soal coding bro. Debug, review, jelasin konsep — gue siap. Fr fr no cap! 🔥</p>
+  <div class="page-header reveal">
+    <div class="hero-badge">💻 AI CODING ASSISTANT</div>
+    <h1 class="hero-title">MentorZ<br><span class="hero-grad">Dev Mode ⚡</span></h1>
+    <p class="hero-sub">Tanya soal coding bro — debug, review, jelasin konsep, sampe bikin project dari nol. Gas!</p>
   </div>
 
-  <!-- QUICK PROMPTS -->
-  <div class="coder-chips">
+  <div class="coder-chips reveal delay-1">
     <button class="coder-chip" onclick="setCoderPrompt('Debug kode ini bro, ada error yang gue ga ngerti')">🐛 Debug Code</button>
     <button class="coder-chip" onclick="setCoderPrompt('Jelasin konsep async/await di JavaScript dong bro')">⚡ Async/Await</button>
     <button class="coder-chip" onclick="setCoderPrompt('Bikin REST API sederhana dengan Node.js Express')">🔧 REST API</button>
@@ -272,44 +256,35 @@
     <button class="coder-chip" onclick="setCoderPrompt('Review code ini dan kasih saran improvement bro')">🔍 Code Review</button>
   </div>
 
-  <!-- CHAT AREA -->
-  <div class="coder-chat-wrap">
+  <div class="coder-chat-wrap glass-card reveal delay-2">
     <div class="coder-messages" id="coderMessages">
-      <!-- Welcome message -->
       <div class="msg-row ai">
         <div class="msg-avatar">&lt;/&gt;</div>
         <div class="msg-content">
           <div class="msg-name">MentorZ Dev</div>
           <div class="msg-bubble">
             <p>Yo bro! Gue MentorZ Dev Mode — siap bantu lo di semua hal soal coding. 🔥</p>
-            <p>Mau <strong>debug</strong>, <strong>code review</strong>, <strong>jelasin konsep</strong>, atau <strong>bikin project dari nol</strong> — gue based di sini bro.</p>
-            <p>Stack yang gue kuasai: JavaScript, Python, React, Node.js, CSS, SQL, dan banyak lagi. <strong>Let's build something W!</strong> 💻</p>
+            <p>Mau <strong>debug</strong>, <strong>code review</strong>, <strong>jelasin konsep</strong>, atau <strong>bikin project dari nol</strong> — gas aja bro.</p>
+            <p>Stack yang gue kuasai: JavaScript, Python, React, Node.js, CSS, SQL, dan banyak lagi. <strong>Let's build something W! 💻</strong></p>
           </div>
           <div class="msg-time">Now</div>
         </div>
       </div>
     </div>
 
-    <!-- Typing indicator -->
     <div class="typing-wrap hidden" id="coderTyping">
       <div class="typing-avatar">&lt;/&gt;</div>
       <div class="typing-bubble"><span></span><span></span><span></span></div>
       <span class="typing-text">MentorZ lagi nge-code... ⚡</span>
     </div>
 
-    <!-- Input -->
     <div class="chat-input-wrap">
       <div class="chat-input-box">
-        <textarea
-          id="coderInput"
-          class="chat-textarea"
+        <textarea id="coderInput" class="chat-textarea"
           placeholder="Paste code lo atau tanya apapun soal coding... 💻"
-          rows="1"
-          onkeydown="handleCoderKey(event)"
-          oninput="autoResize(this)"
-        ></textarea>
+          rows="1" onkeydown="handleCoderKey(event)" oninput="autoResize(this)"></textarea>
         <div class="input-actions">
-          <button class="input-btn" onclick="sendCoderMessage()" id="coderSendBtn" title="Send">
+          <button class="input-btn send-btn" onclick="sendCoderMessage()" id="coderSendBtn" title="Send">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </div>
@@ -323,7 +298,7 @@
 
 </div>
 
-<!-- FULLSCREEN IMAGE MODAL -->
+<!-- MODAL -->
 <div class="modal-overlay hidden" id="imgModal" onclick="closeModal()">
   <div class="modal-content" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
@@ -333,6 +308,16 @@
 
 <!-- TOAST -->
 <div class="toast hidden" id="toast"></div>
+
+<!-- SCROLL BUTTONS -->
+<div class="scroll-btns" id="scrollBtns">
+  <button class="scroll-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ke atas">
+    <i class="fa-solid fa-chevron-up"></i>
+  </button>
+  <button class="scroll-btn" onclick="window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})" title="Ke bawah">
+    <i class="fa-solid fa-chevron-down"></i>
+  </button>
+</div>
 
 <script src="script.js"></script>
 </body>
