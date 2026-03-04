@@ -1,5 +1,5 @@
-import { deepaiChat }       from '../lib/deepai.js';
-import { rateLimit }        from '../lib/rateLimit.js';
+import { deepaiChat } from '../lib/deepai.js';
+import { rateLimit }  from '../lib/rateLimit.js';
 import { buildSystemPrompt } from '../lib/systemPrompt.js';
 
 export default async function handler(req, res) {
@@ -11,35 +11,28 @@ export default async function handler(req, res) {
     if (!rateLimit(req, res))    return;
 
     try {
-        const { message, chatHistory = [], userName = '' } = req.body ?? {};
+        const { message, chatHistory = [], userName = '' } = req.body;
+        if (!message?.trim()) return res.status(400).json({ error: 'Message is required bestie!' });
 
-        if (!message?.trim()) {
-            return res.status(400).json({ error: 'Pesan kosong bro!' });
-        }
-
+        // Build full history with new message
         const history = [
             ...chatHistory,
             { role: 'user', content: message.trim() },
         ];
 
         const systemPrompt = buildSystemPrompt(userName);
-        const reply        = await deepaiChat(history, systemPrompt);
+        const reply = await deepaiChat(history, systemPrompt);
 
         return res.status(200).json({
-            success  : true,
+            success: true,
             reply,
             timestamp: new Date().toISOString(),
         });
 
     } catch (err) {
-        console.error('[chat] Error:', err.message);
-
-        // Return proper JSON error always — NEVER plain text
+        console.error('Chat error:', err.message);
         return res.status(500).json({
-            success: false,
-            error  : err.message?.includes('DeepAI')
-                ? err.message
-                : 'Server lagi sibuk bro, coba lagi ya dalam beberapa detik 🙏',
+            error: err.message || 'Aduh error nih bestie, coba lagi ya 😭',
         });
     }
 }
