@@ -1,132 +1,110 @@
-// api/upload.js — Handle image analysis via DeepAI
-// Images → DeepAI image captioning / description
-// Files (txt, pdf, code) → extract text and return as context
+// api/upload.js — Handle image analysis & file text extraction
+// Strategy:
+//   Images → DeepAI densecap → neuraltalk → image2text → graceful fallback
+//   Files  → client sends plain text, we wrap it for chat context
 
 import axios from 'axios';
 import FormData from 'form-data';
 import crypto from 'crypto';
 
 function getApiKey() {
-    const prefix = 'tryit';
-    const id     = Math.floor(1e10 + Math.random() * 9e10).toString();
-    const hash   = crypto.randomBytes(16).toString('hex');
-    return `${prefix}-${id}-${hash}`;
+    const id   = Math.floor(1e10 + Math.random() * 9e10).toString();
+    const hash = crypto.randomBytes(16).toString('hex');
+    return `tryit-${id}-${hash}`;
 }
 
 function getHeaders(extra = {}) {
     return {
-        'api-key': getApiKey(),
+        'api-key'   : getApiKey(),
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Mobile Safari/537.36',
-        'Accept': '*/*',
-        'Origin': 'https://deepai.org',
-        'Referer': 'https://deepai.org/',
+        'Accept'    : '*/*',
+        'Origin'    : 'https://deepai.org',
+        'Referer'   : 'https://deepai.org/',
         ...extra,
     };
 }
 
-// Use DeepAI image recognition / content moderation / caption API
-async function analyzeImageWithDeepAI(base64Data, mimeType) {
-    // Convert base64 to buffer
-    const buffer = Buffer.from(base64Data, 'base64');
-
+async function tryDeepAIEndpoint(endpoint, buffer, mimeType) {
     const form = new FormData();
     form.append('image', buffer, {
-        filename: 'image.jpg',
+        filename   : 'upload.jpg',
         contentType: mimeType || 'image/jpeg',
     });
-
     const headers = { ...form.getHeaders(), ...getHeaders() };
+    const res = await axios.post(
+        `https://api.deepai.org/api/${endpoint}`,
+        form,
+        { headers, timeout: 25000 }
+    );
+    return res.data;
+}
 
-    // Try image recognition first
-    try {
-        const res = await axios.post(
-            'https://api.deepai.org/api/densecap',
-            form,
-            { headers, timeout: 30000 }
-        );
-        if (res.data?.output?.captions?.length) {
-            return res.data.output.captions.map(c => c.caption).join('. ');
-        }
-    } catch (e) {
-        console.log('densecap failed, trying image2text');
-    }
-
-    // Fallback: image-to-text
-    const form2 = new FormData();
-    form2.append('image', buffer, {
-        filename: 'image.jpg',
-        contentType: mimeType || 'image/jpeg',
-    });
-    const headers2 = { ...form2.getHeaders(), ...getHeaders() };
+async function analyzeImage(base64Data, mimeType) {
+    const buffer = Buffer.from(base64Data, 'base64');
 
     try {
-        const res2 = await axios.post(
-            'https://api.deepai.org/api/neuraltalk',
-            form2,
-            { headers: headers2, timeout: 30000 }
-        );
-        if (res2.data?.output) return res2.data.output;
-    } catch (e) {
-        console.log('neuraltalk failed');
-    }
+        const data = await tryDeepAIEndpoint('densecap', buffer, mimeType);
+        const captions = data?.output?.captions;
+        if (captions?.length) return captions.slice(0, 5).map(c => c.caption).join('. ');
+    } catch (e) { console.warn('[upload] densecap failed:', e.message); }
+
+    try {
+        const data = await tryDeepAIEndpoint('neuraltalk', buffer, mimeType);
+        if (data?.output) return data.output;
+    } catch (e) { console.warn('[upload] neuraltalk failed:', e.message); }
+
+    try {
+        const data = await tryDeepAIEndpoint('image2text', buffer, mimeType);
+        if (data?.output) return data.output;
+    } catch (e) { console.warn('[upload] image2text failed:', e.message); }
 
     return null;
 }
 
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Origin' , '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
     try {
-        const { type, data, mimeType, fileName } = req.body;
+        const { type, data, mimeType, fileName } = req.body ?? {};
 
-        // ── IMAGE ──────────────────────────────
         if (type === 'image') {
-            if (!data) return res.status(400).json({ error: 'No image data' });
+            if (!data) return res.status(400).json({ error: 'No image data provided' });
+            if (data.length > 7_000_000)
+                return res.status(413).json({ error: 'Image terlalu besar. Maksimal ~5 MB ya bro!' });
 
-            const description = await analyzeImageWithDeepAI(data, mimeType);
-
-            if (description) {
-                return res.status(200).json({
-                    success: true,
-                    type: 'image',
-                    description,
-                    contextForChat: `[USER MENGIRIM GAMBAR: "${fileName || 'image'}". Deskripsi otomatis dari AI: ${description}. Jawab berdasarkan gambar ini.]`,
-                });
-            } else {
-                // If DeepAI can't analyze, still pass the image info
-                return res.status(200).json({
-                    success: true,
-                    type: 'image',
-                    description: null,
-                    contextForChat: `[USER MENGIRIM GAMBAR: "${fileName || 'image'}". Gambar tidak bisa dianalisis otomatis, tapi user ingin mendiskusikannya.]`,
-                });
-            }
-        }
-
-        // ── FILE / TEXT ──────────────────────────
-        if (type === 'file') {
-            if (!data) return res.status(400).json({ error: 'No file data' });
-
-            // data is the text content of the file (extracted client-side)
-            const truncated = data.slice(0, 8000); // max 8k chars to avoid token overflow
-            const ext = fileName?.split('.').pop()?.toLowerCase() || 'txt';
+            const description = await analyzeImage(data, mimeType);
+            const safeName    = fileName || 'gambar';
 
             return res.status(200).json({
-                success: true,
-                type: 'file',
-                contextForChat: `[USER MENGIRIM FILE: "${fileName}". Isi file (${ext}):\n\`\`\`${ext}\n${truncated}\n\`\`\`\nJawab pertanyaan user berdasarkan file ini.]`,
-                preview: truncated.slice(0, 200),
+                success       : true,
+                type          : 'image',
+                description   : description ?? null,
+                contextForChat: description
+                    ? `[USER MENGIRIM GAMBAR: "${safeName}". Deskripsi AI: ${description}. Jawab/bahas gambar ini sesuai pertanyaan user.]`
+                    : `[USER MENGIRIM GAMBAR: "${safeName}". Gambar tidak bisa dianalisis otomatis. User ingin diskusi tentang gambar ini.]`,
             });
         }
 
-        return res.status(400).json({ error: 'Unknown type' });
+        if (type === 'file') {
+            if (!data) return res.status(400).json({ error: 'No file content provided' });
+            const ext       = fileName?.split('.').pop()?.toLowerCase() ?? 'txt';
+            const truncated = data.slice(0, 8000);
+            return res.status(200).json({
+                success       : true,
+                type          : 'file',
+                preview       : truncated.slice(0, 200),
+                contextForChat: `[USER MENGIRIM FILE: "${fileName ?? 'file'}". Tipe: ${ext}.\n\nIsi file:\n\`\`\`${ext}\n${truncated}\n\`\`\`\nJawab pertanyaan user berdasarkan isi file ini.]`,
+            });
+        }
+
+        return res.status(400).json({ error: `Unknown upload type: "${type}"` });
 
     } catch (err) {
-        console.error('[upload] Error:', err.message);
-        return res.status(500).json({ error: 'Upload processing failed: ' + err.message });
+        console.error('[upload] Error:', err);
+        return res.status(500).json({ error: 'Upload processing failed: ' + (err.message ?? 'unknown') });
     }
 }
