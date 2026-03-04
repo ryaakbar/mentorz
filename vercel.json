@@ -1,8 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/chat",      "destination": "/api/chat"      },
-    { "source": "/api/image",     "destination": "/api/image"     },
     { "source": "/api/upload",    "destination": "/api/upload"    },
+    { "source": "/api/image",     "destination": "/api/image"     },
     { "source": "/api/tts",       "destination": "/api/tts"       },
     { "source": "/api/sentiment", "destination": "/api/sentiment" },
     { "source": "/api/summarize", "destination": "/api/summarize" },
@@ -21,6 +21,8 @@
     }
   ],
   "functions": {
-    "api/**/*.js": { "maxDuration": 60 }
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
   }
 }
