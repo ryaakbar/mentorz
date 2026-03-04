@@ -24,7 +24,7 @@ export default async function handler(req, res) {
             gridSize      = 1,
         } = req.body;
 
-        if (!prompt?.trim()) return res.status(400).json({ error: 'Prompt required bestie!' });
+        if (!prompt?.trim()) return res.status(400).json({ error: 'Tulis prompt dulu bro!' });
 
         // Validate style
         const safeStyle = ALLOWED_STYLES.includes(style) ? style : '';
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 
         return res.status(200).json({
             success:   true,
-            imageUrl,
+            url: imageUrl,
             prompt:    prompt.trim(),
             style:     safeStyle,
             timestamp: new Date().toISOString(),
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
     } catch (err) {
         console.error('Image error:', err.message);
         return res.status(500).json({
-            error: err.message || 'Gagal generate gambar bestie 😭',
+            error: err.message || 'Gagal generate gambar bro, coba lagi 😤',
         });
     }
 }
