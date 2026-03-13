@@ -8,12 +8,11 @@ let isTyping      = false;
 let currentMode   = 'chat';
 let selectedStyle = '';
 let lastPrompt    = '';
-let imgHistory    = JSON.parse(localStorage.getItem('mz_img_history') || '[]');
+// Image feature removed
 let toastTimer;
 
 // ── INIT ───────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    restoreImgHistory();
     document.getElementById('chatInput').addEventListener('input', updateCharCount);
 });
 
@@ -50,11 +49,6 @@ function sendQuick(text) {
 }
 
 async function sendMessage() {
-    // Kalau ada pending upload, handle upload flow langsung dari sini
-    if (pendingUpload) {
-        return _sendWithUpload();
-    }
-
     const input = document.getElementById('chatInput');
     const text  = input.value.trim();
     if (!text || isTyping) return;
@@ -64,6 +58,8 @@ async function sendMessage() {
     if (hero) hero.classList.add('compact');
 
     appendMessage('user', text);
+
+    // ✅ FIX: kirim 'message' dan 'chatHistory' sesuai yang backend expect
     chatHistory.push({ role: 'user', content: text });
 
     input.value = '';
@@ -78,9 +74,10 @@ async function sendMessage() {
         const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            // ✅ FIX UTAMA: field name harus 'message' + 'chatHistory'
             body: JSON.stringify({
                 message: text,
-                chatHistory: chatHistory.slice(0, -1)
+                chatHistory: chatHistory.slice(0, -1) // semua kecuali yg baru
             })
         });
 
@@ -181,183 +178,6 @@ async function regenerateMsg() {
     }
 }
 
-// ════════════════════════════════════════
-// IMAGE GENERATION
-// ════════════════════════════════════════
-
-function selectStyle(btn, style) {
-    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    selectedStyle = style;
-}
-
-function setPrompt(text) {
-    document.getElementById('imagePrompt').value = text;
-    document.getElementById('imagePrompt').focus();
-}
-
-async function generateImage() {
-    const prompt = document.getElementById('imagePrompt').value.trim();
-    if (!prompt) { showToast('⚠️ Tulis deskripsi dulu bro!'); return; }
-
-    lastPrompt = prompt;
-
-    const genBtn      = document.getElementById('generateBtn');
-    const placeholder = document.getElementById('imgPlaceholder');
-    const loading     = document.getElementById('imgLoading');
-    const result      = document.getElementById('imgResult');
-
-    genBtn.disabled = true;
-    genBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Generating...</span>';
-    placeholder.classList.add('hidden');
-    result.classList.add('hidden');
-    loading.classList.remove('hidden');
-
-    try {
-        const res = await fetch('/api/image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, style: selectedStyle })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed');
-
-        const img = document.getElementById('generatedImg');
-        const promptUsed = document.getElementById('imgPromptUsed');
-        promptUsed.textContent = `"${prompt}"${selectedStyle ? ` • Style: ${selectedStyle}` : ''}`;
-
-        // FIX: pasang event handler DULU sebelum set src (cegah race condition)
-        img.onload = () => {
-            loading.classList.add('hidden');
-            result.classList.remove('hidden');
-            addToImgHistory(data.url, prompt);
-            showToast('⚡ Image generated! W bro!');
-        };
-        img.onerror = () => {
-            // Fallback: tampilkan gambar langsung via URL tanpa onload
-            loading.classList.add('hidden');
-            result.classList.remove('hidden');
-            addToImgHistory(data.url, prompt);
-            showToast('⚡ Image generated! W bro!');
-        };
-
-        // Set src setelah handler terpasang + tambah cache buster
-        img.src = '';
-        img.crossOrigin = 'anonymous';
-        // Gunakan proxy trick: request via no-store untuk bypass cache block
-        const finalUrl = data.url.includes('?')
-            ? data.url + '&_t=' + Date.now()
-            : data.url + '?_t=' + Date.now();
-        img.src = finalUrl;
-
-    } catch (err) {
-        loading.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        showToast(`❌ Error: ${err.message}`);
-    } finally {
-        genBtn.disabled = false;
-        genBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i><span>Generate Image</span>';
-    }
-}
-
-function regenerateImage() {
-    if (lastPrompt) {
-        document.getElementById('imagePrompt').value = lastPrompt;
-        generateImage();
-    }
-}
-
-function downloadImage() {
-    const src = document.getElementById('generatedImg').src;
-    if (!src) return;
-    const a = document.createElement('a');
-    a.href = src; a.download = `mentorz_${Date.now()}.jpg`; a.click();
-    showToast('⬇️ Downloading...');
-}
-
-function shareToChat() {
-    const url = document.getElementById('generatedImg').src;
-    if (!url) return;
-    switchMode('chat');
-    const hero = document.getElementById('chatHero');
-    if (hero) hero.classList.add('compact');
-    appendMessage('user', `Cek gambar yang gue generate: ${url}`);
-    chatHistory.push({ role: 'user', content: `I generated this image: ${url}\n\nPrompt: "${lastPrompt}"${selectedStyle ? `. Style: ${selectedStyle}` : ''}` });
-    setTimeout(() => {
-        setTyping(true);
-        setTimeout(async () => {
-            try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: `I generated this image: ${url}`, chatHistory: chatHistory.slice(0,-1) })
-                });
-                const data = await res.json();
-                const reply = data.reply || '';
-                chatHistory.push({ role: 'assistant', content: reply });
-                appendMessage('ai', reply);
-            } catch(e) {}
-            finally { setTyping(false); }
-        }, 500);
-    }, 300);
-}
-
-// ── IMG HISTORY ────────────────────────
-function addToImgHistory(url, prompt) {
-    imgHistory.unshift({ url, prompt, ts: Date.now() });
-    if (imgHistory.length > 20) imgHistory = imgHistory.slice(0, 20);
-    localStorage.setItem('mz_img_history', JSON.stringify(imgHistory));
-    renderImgHistory();
-}
-
-function renderImgHistory() {
-    if (!imgHistory.length) return;
-    document.getElementById('imgHistoryWrap').style.display = 'block';
-    const grid = document.getElementById('imgHistoryGrid');
-    grid.innerHTML = imgHistory.map((item, i) => `
-        <div class="img-hist-item" onclick="loadHistoryImg(${i})" title="${escHtml(item.prompt)}">
-            <img src="${escHtml(item.url)}" alt="history ${i}" loading="lazy">
-        </div>
-    `).join('');
-}
-
-function loadHistoryImg(i) {
-    const item = imgHistory[i];
-    if (!item) return;
-    document.getElementById('imagePrompt').value = item.prompt;
-    lastPrompt = item.prompt;
-    const img = document.getElementById('generatedImg');
-    document.getElementById('imgPlaceholder').classList.add('hidden');
-    document.getElementById('imgLoading').classList.add('hidden');
-    document.getElementById('imgResult').classList.remove('hidden');
-    // FIX: set src setelah show result supaya image langsung visible
-    img.src = '';
-    img.src = item.url;
-    document.getElementById('imgPromptUsed').textContent = `"${item.prompt}"`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function restoreImgHistory() { if (imgHistory.length) renderImgHistory(); }
-
-function clearImgHistory() {
-    imgHistory = [];
-    localStorage.removeItem('mz_img_history');
-    document.getElementById('imgHistoryWrap').style.display = 'none';
-    document.getElementById('imgHistoryGrid').innerHTML = '';
-    showToast('🗑️ History cleared!');
-}
-
-// ── MODAL ──────────────────────────────
-function openFullscreen(img) {
-    document.getElementById('modalImg').src = img.src;
-    document.getElementById('imgModal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
-function closeModal() {
-    document.getElementById('imgModal').classList.add('hidden');
-    document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 // ════════════════════════════════════════
 // CODER — AI Coding Assistant
@@ -560,7 +380,7 @@ const MAX_FILE_BYTES  = 5 * 1024 * 1024; // 5 MB
 // ── File selected from <input type="file"> ─────────────────────────────────────
 function handleFileSelect(event) {
     const file = event.target.files?.[0];
-    event.target.value = ''; // reset so same file can be re-selected
+    event.target.value = '';
     if (!file) return;
 
     if (file.size > MAX_FILE_BYTES) {
@@ -569,37 +389,13 @@ function handleFileSelect(event) {
     }
 
     const ext = file.name.split('.').pop().toLowerCase();
-    const isImage = file.type.startsWith('image/');
-
-    if (isImage) {
-        _prepareImage(file);
-    } else if (ALLOWED_TEXT_EXTS.has(ext)) {
+    if (ALLOWED_TEXT_EXTS.has(ext)) {
         _prepareTextFile(file);
     } else {
-        showToast(`⚠️ Tipe file .${ext} belum didukung bro.`);
+        showToast(`⚠️ Tipe file .${ext} belum didukung bro. Hanya file teks/kode ya!`);
     }
 }
 
-function _prepareImage(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const dataUrl  = e.target.result;               // "data:image/jpeg;base64,..."
-        const base64   = dataUrl.split(',')[1];
-        const previewUrl = dataUrl;
-
-        pendingUpload = {
-            type     : 'image',
-            data     : base64,
-            mimeType : file.type,
-            fileName : file.name,
-            previewUrl,
-        };
-
-        _showUploadBadge(`🖼️ ${file.name}`);
-        showToast('📎 Gambar siap dikirim bro!');
-    };
-    reader.readAsDataURL(file);
-}
 
 function _prepareTextFile(file) {
     const reader = new FileReader();
@@ -629,8 +425,16 @@ function removeUpload() {
     showToast('🗑️ Attachment dihapus.');
 }
 
-// ── Upload send flow ──────────────────────────────────────────────────────────
-async function _sendWithUpload() {
+// ── Override sendMessage to inject upload context ──────────────────────────────
+const _originalSendMessage = sendMessage;
+
+// Re-define sendMessage to handle upload flow
+window.sendMessage = async function () {
+    if (!pendingUpload) {
+        // No attachment — normal flow
+        return _originalSendMessage();
+    }
+
     const input = document.getElementById('chatInput');
     const text  = input.value.trim();
     if (isTyping) return;
@@ -638,12 +442,7 @@ async function _sendWithUpload() {
     const hero = document.getElementById('chatHero');
     if (hero) hero.classList.add('compact');
 
-    // Tampilkan pesan user dengan thumbnail kalau gambar
-    if (pendingUpload.type === 'image' && pendingUpload.previewUrl) {
-        _appendMessageWithImage('user', text || '📎 (gambar dikirim)', pendingUpload.previewUrl, pendingUpload.fileName);
-    } else {
-        appendMessage('user', text || `📎 (file: ${pendingUpload.fileName})`);
-    }
+    appendMessage('user', text || `📎 (file: ${pendingUpload.fileName})`);
 
     input.value = '';
     input.style.height = 'auto';
@@ -652,10 +451,12 @@ async function _sendWithUpload() {
     setTyping(true);
     document.getElementById('sendBtn').disabled = true;
 
+    // Clear badge immediately for UX
     const uploadSnapshot = { ...pendingUpload };
     removeUpload();
 
     try {
+        // Step 1: Call /api/upload
         showToast('⏳ Memproses attachment...', 8000);
         const upRes = await fetch('/api/upload', {
             method : 'POST',
@@ -677,6 +478,7 @@ async function _sendWithUpload() {
 
         chatHistory.push({ role: 'user', content: userMessage });
 
+        // Step 2: Send to /api/chat with upload context
         const chatRes = await fetch('/api/chat', {
             method : 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -699,35 +501,8 @@ async function _sendWithUpload() {
         document.getElementById('sendBtn').disabled = false;
         document.getElementById('chatInput').focus();
     }
-}
+};
 
-// Append message with inline image thumbnail
-function _appendMessageWithImage(role, text, imageUrl, fileName) {
-    const wrap  = document.getElementById('chatMessages');
-    const isAI  = role === 'ai';
-    const time  = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
-    const row = document.createElement('div');
-    row.className = `msg-row ${role}`;
-
-    const safeText = parseMarkdown(text);
-    const safeFile = escHtml(fileName || 'image');
-
-    row.innerHTML = `
-        <div class="msg-avatar">${isAI ? 'Z' : '👤'}</div>
-        <div class="msg-content">
-            <div class="msg-name">${isAI ? 'MentorZ' : 'You'}</div>
-            <div class="msg-bubble">
-                <img src="${escHtml(imageUrl)}" class="upload-img-thumb" alt="${safeFile}" />
-                ${safeText ? `<div>${safeText}</div>` : ''}
-            </div>
-            <div class="msg-time">${time}</div>
-        </div>
-    `;
-
-    wrap.appendChild(row);
-    wrap.scrollTop = wrap.scrollHeight;
-}
 
 // ── NAVBAR SCROLL & REVEAL (MDP Style) ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {

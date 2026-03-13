@@ -22,13 +22,13 @@
     MENTORZ AI <span class="marquee-dot">◆</span>
     GEN Z MENTOR <span class="marquee-dot">◆</span>
     POWERED BY DEEPAI <span class="marquee-dot">◆</span>
-    CHAT · IMAGE · CODE <span class="marquee-dot">◆</span>
+    CHAT · CODE <span class="marquee-dot">◆</span>
     BUILT BY RYAAKBAR <span class="marquee-dot">◆</span>
     NO BS, REAL TALK <span class="marquee-dot">◆</span>
     MENTORZ AI <span class="marquee-dot">◆</span>
     GEN Z MENTOR <span class="marquee-dot">◆</span>
     POWERED BY DEEPAI <span class="marquee-dot">◆</span>
-    CHAT · IMAGE · CODE <span class="marquee-dot">◆</span>
+    CHAT · CODE <span class="marquee-dot">◆</span>
     BUILT BY RYAAKBAR <span class="marquee-dot">◆</span>
     NO BS, REAL TALK <span class="marquee-dot">◆</span>
   </div>
@@ -48,9 +48,6 @@
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchMode('chat')" id="tab-chat">
       <i class="fa-solid fa-message"></i><span>Chat</span>
-    </button>
-    <button class="nav-tab" onclick="switchMode('image')" id="tab-image">
-      <i class="fa-solid fa-image"></i><span>Image</span>
     </button>
     <button class="nav-tab" onclick="switchMode('coder')" id="tab-coder">
       <i class="fa-solid fa-code"></i><span>Coder</span>
@@ -114,9 +111,9 @@
     </div>
     <div class="chat-input-box">
       <input type="file" id="fileInput"
-        accept="image/*,.txt,.md,.js,.ts,.py,.html,.css,.json,.csv,.jsx,.tsx,.java,.c,.cpp,.cs,.php,.rb,.go,.rs,.swift,.kt"
+        accept=".txt,.md,.js,.ts,.py,.html,.css,.json,.csv,.jsx,.tsx,.java,.c,.cpp,.cs,.php,.rb,.go,.rs,.swift,.kt"
         style="display:none" onchange="handleFileSelect(event)"/>
-      <button class="input-btn attach-btn" onclick="document.getElementById('fileInput').click()" title="Attach file atau foto">
+      <button class="input-btn attach-btn" onclick="document.getElementById('fileInput').click()" title="Attach file teks">
         <i class="fa-solid fa-paperclip"></i>
       </button>
       <textarea id="chatInput" class="chat-textarea"
@@ -136,103 +133,7 @@
 
 </div>
 
-<!-- ══════════════════════════════════ -->
-<!--  IMAGE MODE                        -->
-<!-- ══════════════════════════════════ -->
-<div class="mode-view" id="view-image">
 
-  <div class="page-header reveal">
-    <div class="hero-badge">🎨 AI IMAGE GEN</div>
-    <h1 class="hero-title">Generate Gambar<br><span class="hero-grad">dari Teks ✨</span></h1>
-    <p class="hero-sub">Deskripsiin gambar lo dalam kata-kata, MentorZ yang eksekusi. Hasilnya W, gue jamin.</p>
-  </div>
-
-  <div class="image-workspace reveal delay-1">
-
-    <div class="image-controls glass-card">
-      <div class="card-body">
-        <div class="ctrl-section">
-          <label class="input-label">DESCRIBE YOUR IMAGE 📝</label>
-          <textarea id="imagePrompt" class="cyber-input ctrl-textarea"
-            placeholder="Contoh: A futuristic city at night with neon lights, cyberpunk style, ultra detailed 4K..."
-            rows="4"></textarea>
-        </div>
-
-        <div class="ctrl-section">
-          <label class="input-label">STYLE 🎨</label>
-          <div class="style-grid">
-            <button class="style-btn active" data-style="" onclick="selectStyle(this, '')">Default</button>
-            <button class="style-btn" data-style="realistic photo" onclick="selectStyle(this, 'realistic photo')">Realistic</button>
-            <button class="style-btn" data-style="anime" onclick="selectStyle(this, 'anime')">Anime</button>
-            <button class="style-btn" data-style="cyberpunk" onclick="selectStyle(this, 'cyberpunk')">Cyberpunk</button>
-            <button class="style-btn" data-style="oil painting" onclick="selectStyle(this, 'oil painting')">Oil Paint</button>
-            <button class="style-btn" data-style="watercolor" onclick="selectStyle(this, 'watercolor')">Watercolor</button>
-            <button class="style-btn" data-style="3D render" onclick="selectStyle(this, '3D render')">3D Render</button>
-            <button class="style-btn" data-style="sketch pencil drawing" onclick="selectStyle(this, 'sketch pencil drawing')">Sketch</button>
-            <button class="style-btn" data-style="pixel art" onclick="selectStyle(this, 'pixel art')">Pixel Art</button>
-            <button class="style-btn" data-style="fantasy illustration" onclick="selectStyle(this, 'fantasy illustration')">Fantasy</button>
-          </div>
-        </div>
-
-        <div class="ctrl-section">
-          <label class="input-label">QUICK PROMPTS 💡</label>
-          <div class="quick-prompts">
-            <button class="qp-btn" onclick="setPrompt('A stunning anime girl with glowing blue eyes in a neon city at night')">🌙 Anime City</button>
-            <button class="qp-btn" onclick="setPrompt('Majestic dragon flying over a mountain with aurora borealis, epic fantasy art')">🐉 Dragon Epic</button>
-            <button class="qp-btn" onclick="setPrompt('Futuristic robot with neon lights, cyberpunk aesthetic, ultra detailed')">🤖 Cyber Robot</button>
-            <button class="qp-btn" onclick="setPrompt('Beautiful Indonesian landscape with rice terraces at golden hour')">🌾 Indonesia</button>
-            <button class="qp-btn" onclick="setPrompt('Abstract digital art with vibrant colors and geometric patterns')">🎨 Abstract</button>
-            <button class="qp-btn" onclick="setPrompt('Cozy cafe interior with warm lighting, books, and coffee aesthetic')">☕ Cozy Cafe</button>
-          </div>
-        </div>
-
-        <button class="cyber-button" onclick="generateImage()" id="generateBtn">
-          <i class="fa-solid fa-wand-magic-sparkles"></i>
-          <span>Generate Image</span>
-          <span class="btn-arrow">→</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="image-result glass-card">
-      <div class="result-placeholder" id="imgPlaceholder">
-        <div class="placeholder-icon">🎨</div>
-        <p>Gambar lo akan muncul di sini</p>
-        <span>Deskripsiin sesuatu yang keren bro!</span>
-      </div>
-      <div class="result-loading hidden" id="imgLoading">
-        <div class="loader-ring"></div>
-        <p>MentorZ lagi nge-generate...</p>
-        <span>Sabar ya bro, biasanya 10-30 detik ⏳</span>
-        <div class="loader-progress"><div class="loader-bar"></div></div>
-      </div>
-      <div class="result-image-wrap hidden" id="imgResult">
-        <img id="generatedImg" src="" alt="Generated image" onclick="openFullscreen(this)">
-        <div class="img-actions">
-          <button class="btn-download" onclick="downloadImage()">
-            <i class="fa-solid fa-download"></i> Download
-          </button>
-          <button class="btn-download" onclick="regenerateImage()">
-            <i class="fa-solid fa-rotate"></i> Regenerate
-          </button>
-          <button class="btn-download" onclick="shareToChat()">
-            <i class="fa-solid fa-share"></i> Share ke Chat
-          </button>
-        </div>
-        <div class="img-prompt-used" id="imgPromptUsed"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="img-history-wrap reveal" id="imgHistoryWrap" style="display:none">
-    <div class="ih-header">
-      <span>History 🗂️</span>
-      <button onclick="clearImgHistory()"><i class="fa-solid fa-trash-can"></i></button>
-    </div>
-    <div class="img-history-grid" id="imgHistoryGrid"></div>
-  </div>
-
-</div>
 
 <!-- ══════════════════════════════════ -->
 <!--  CODER MODE                        -->
@@ -298,13 +199,6 @@
 
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay hidden" id="imgModal" onclick="closeModal()">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-    <img id="modalImg" src="" alt="">
-  </div>
-</div>
 
 <!-- TOAST -->
 <div class="toast hidden" id="toast"></div>
