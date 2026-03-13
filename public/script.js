@@ -85,7 +85,14 @@ async function sendMessage() {
         if (!res.ok) throw new Error(data.error || 'Failed');
 
         const reply = data.reply || 'Waduh MentorZ error nih bro 😤';
-        chatHistory.push({ role: 'assistant', content: reply });
+
+        // Kalau reply adalah rejection/error message, jangan masukin ke history
+        // biar ga snowball effect di conversation berikutnya
+        const REJECTION_KW = ['tidak dapat menyediakan', 'tidak bisa melanjutkan', 'pedoman komunitas', 'konten tidak pantas'];
+        const isRejection = REJECTION_KW.some(k => reply.toLowerCase().includes(k));
+        if (!isRejection) {
+            chatHistory.push({ role: 'assistant', content: reply });
+        }
         appendMessage('ai', reply);
 
     } catch (err) {
@@ -215,19 +222,13 @@ async function sendCoderMessage() {
     wrap.scrollTop = wrap.scrollHeight;
 
     try {
-        const systemMsg = `Lo adalah MentorZ — senior dev Gen Z yang based. Expertise: JavaScript, Python, React, Node.js, CSS, SQL, dan semua bahasa populer.
-Dibuat oleh ryaakbar.
-Kalau ditanya siapa yang buat lo: "Gue dibuat sama ryaakbar bro 🔥"
-Gaya: cowok, straight to the point, pake code examples yang bersih, jelasin dengan bahasa yang gampang.
-Selalu format code dengan proper code blocks. Kasih penjelasan singkat sebelum dan sesudah code.`;
-
         const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 message: text,
                 chatHistory: coderHistory.slice(0, -1),
-                userName: 'Coder Mode - ' + systemMsg
+                mode: 'coder'
             })
         });
         const data = await res.json();
